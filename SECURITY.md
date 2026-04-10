@@ -11,32 +11,26 @@ We support only the latest minor version. Please upgrade to receive security pat
 
 ## Security Scanning
 
-This project uses multiple layers of automated security scanning:
+This project uses automated security scanning in CI/CD:
 
 ### Dependency Vulnerabilities
-- **Dependabot**: Automated dependency updates (weekly)
-- **npm audit**: Runs on every CI build
-- **Socket.dev**: Supply chain attack detection
-
-### Code Analysis
-- **CodeQL**: Static analysis for security vulnerabilities (weekly + on PRs)
-- **Semgrep**: SAST scanning for OWASP top 10, secrets, and TypeScript-specific issues
-- **Trivy**: Filesystem, dependency, and container image vulnerability scanning
-- **Gitleaks**: Secret detection across git history
+- **Dependabot**: Automated dependency updates (weekly, npm + GitHub Actions)
+- **npm audit**: Run manually before releases
 
 ### Container Security
-- **Docker Security Scan**: Daily container image scanning via Trivy
-- **SBOM Generation**: CycloneDX and SPDX format (365-day retention)
-- **OSSF Scorecard**: OpenSSF best practices scoring
+- **Docker image**: Built via `ghcr-build.yml` with multi-stage build and non-root user
+- **Gitleaks**: Secret detection configured via `.gitleaks.toml`
+
+### Data Freshness
+- **check-freshness.yml**: Weekly automated check for new MFSA publications
+
+> **Note:** Additional scanning layers (CodeQL, Semgrep, Trivy, Socket.dev, OSSF Scorecard)
+> are planned but not yet implemented in CI. Contributions welcome — see CONTRIBUTING.md.
 
 ### What We Scan For
-- Known CVEs in dependencies
-- SQL injection vulnerabilities
-- Cross-site scripting (XSS)
-- Regular expression denial of service (ReDoS)
-- Path traversal attacks
-- Supply chain attacks (malicious packages, typosquatting)
-- Hardcoded secrets and credentials
+- Hardcoded secrets and credentials (Gitleaks)
+- Known CVEs in dependencies (Dependabot + npm audit)
+- SQL injection vulnerabilities (code review + prepared statements)
 
 ## Reporting a Vulnerability
 
@@ -76,12 +70,13 @@ The regulatory database is:
 ## Third-Party Dependencies
 
 We minimize dependencies and regularly audit:
-- Core runtime: Node.js, TypeScript, @ansvar/mcp-sqlite
-- MCP SDK: Official Anthropic package
+- Core runtime: Node.js, TypeScript
+- MCP SDK: Official Anthropic package (`@modelcontextprotocol/sdk`)
+- SQLite: `better-sqlite3`
 - No unnecessary dependencies
 
 All dependencies are tracked via `package-lock.json` and scanned for vulnerabilities.
 
 ---
 
-**Last Updated**: 2026-04-03
+**Last Updated**: 2026-04-10
