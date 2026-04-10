@@ -30,6 +30,7 @@ import {
   searchEnforcement,
   checkProvisionCurrency,
 } from "./db.js";
+import { buildCitation } from "./utils/citation.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -119,6 +120,16 @@ const TOOLS = [
     description: "Return metadata about this MCP server: version, data source, tool list.",
     inputSchema: { type: "object" as const, properties: {}, required: [] },
   },
+  {
+    name: "mt_fin_list_sources",
+    description: "List all data sources used by this MCP server, with URLs and descriptions.",
+    inputSchema: { type: "object" as const, properties: {}, required: [] },
+  },
+  {
+    name: "mt_fin_check_data_freshness",
+    description: "Return the data age and freshness information for this MCP server's regulatory corpus.",
+    inputSchema: { type: "object" as const, properties: {}, required: [] },
+  },
 ];
 
 const SearchRegulationsArgs = z.object({
@@ -143,6 +154,16 @@ const CheckCurrencyArgs = z.object({
   reference: z.string().min(1),
 });
 
+function responseMeta() {
+  return {
+    disclaimer:
+      "This data is provided for informational purposes only and does not constitute legal or regulatory advice. Always verify with official MFSA sources before acting.",
+    data_age: process.env["MFSA_DATA_AGE"] ?? "2024-01-01",
+    copyright: "Malta Financial Services Authority (MFSA)",
+    source_url: "https://www.mfsa.mt/",
+  };
+}
+
 function createMcpServer(): Server {
   const server = new Server(
     { name: SERVER_NAME, version: pkgVersion },
@@ -156,15 +177,32 @@ function createMcpServer(): Server {
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
     const { name, arguments: args = {} } = request.params;
 
-    function textContent(data: unknown) {
+    function textContent(data: Record<string, unknown>) {
       return {
-        content: [{ type: "text" as const, text: JSON.stringify(data, null, 2) }],
+        content: [
+          {
+            type: "text" as const,
+            text: JSON.stringify({ _meta: responseMeta(), ...data }, null, 2),
+          },
+        ],
       };
     }
 
-    function errorContent(message: string) {
+    function errorContent(
+      message: string,
+      errorType: "not_found" | "internal_error" | "invalid_input" = "internal_error",
+    ) {
       return {
-        content: [{ type: "text" as const, text: message }],
+        content: [
+          {
+            type: "text" as const,
+            text: JSON.stringify(
+              { error: message, _meta: responseMeta(), _error_type: errorType },
+              null,
+              2,
+            ),
+          },
+        ],
         isError: true as const,
       };
     }
@@ -179,7 +217,22 @@ function createMcpServer(): Server {
             status: parsed.status,
             limit: parsed.limit,
           });
-          return textContent({ results, count: results.length });
+          const resultsWithCitations = results.map((r) => {
+            const rec = r as Record<string, unknown>;
+            return {
+              ...rec,
+              _citation: buildCitation(
+                String(rec["reference"] ?? ""),
+                String(rec["title"] ?? rec["reference"] ?? ""),
+                "mt_fin_get_regulation",
+                {
+                  sourcebook: String(rec["sourcebook_id"] ?? ""),
+                  reference: String(rec["reference"] ?? ""),
+                },
+              ),
+            };
+          });
+          return textContent({ results: resultsWithCitations, count: results.length });
         }
 
         case "mt_fin_get_regulation": {
@@ -188,9 +241,20 @@ function createMcpServer(): Server {
           if (!provision) {
             return errorContent(
               `Provision not found: ${parsed.sourcebook} ${parsed.reference}`,
+              "not_found",
             );
           }
-          return textContent(provision);
+          const p = provision as Record<string, unknown>;
+          return textContent({
+            ...p,
+            _citation: buildCitation(
+              String(p["reference"] ?? parsed.reference),
+              String(p["title"] ?? p["reference"] ?? parsed.reference),
+              "mt_fin_get_regulation",
+              { sourcebook: parsed.sourcebook, reference: parsed.reference },
+              p["source_url"] as string | undefined,
+            ),
+          });
         }
 
         case "mt_fin_list_sourcebooks": {
@@ -205,13 +269,26 @@ function createMcpServer(): Server {
             action_type: parsed.action_type,
             limit: parsed.limit,
           });
-          return textContent({ results, count: results.length });
+          const resultsWithCitations = results.map((r) => {
+            const rec = r as Record<string, unknown>;
+            const ref = String(rec["reference_number"] ?? rec["firm_name"] ?? "");
+            return {
+              ...rec,
+              _citation: buildCitation(
+                ref,
+                String(rec["firm_name"] ?? ref),
+                "mt_fin_search_enforcement",
+                { query: ref },
+              ),
+            };
+          });
+          return textContent({ results: resultsWithCitations, count: results.length });
         }
 
         case "mt_fin_check_currency": {
           const parsed = CheckCurrencyArgs.parse(args);
           const currency = checkProvisionCurrency(parsed.reference);
-          return textContent(currency);
+          return textContent(currency as Record<string, unknown>);
         }
 
         case "mt_fin_about": {
@@ -225,12 +302,35 @@ function createMcpServer(): Server {
           });
         }
 
+        case "mt_fin_list_sources": {
+          return textContent({
+            sources: [
+              {
+                name: "MFSA",
+                url: "https://www.mfsa.mt/",
+                description:
+                  "Malta Financial Services Authority — the single regulator for financial services in Malta. Source of all rules, guidance notes, circulars, and enforcement actions in this corpus.",
+              },
+            ],
+          });
+        }
+
+        case "mt_fin_check_data_freshness": {
+          const dataAge = process.env["MFSA_DATA_AGE"] ?? "2024-01-01";
+          return textContent({
+            data_age: dataAge,
+            status:
+              "Data was ingested from MFSA publications up to the data_age date. Re-run the ingest script to refresh.",
+            source: "https://www.mfsa.mt/",
+          });
+        }
+
         default:
-          return errorContent(`Unknown tool: ${name}`);
+          return errorContent(`Unknown tool: ${name}`, "invalid_input");
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      return errorContent(`Error executing ${name}: ${message}`);
+      return errorContent(`Error executing ${name}: ${message}`, "internal_error");
     }
   });
 
