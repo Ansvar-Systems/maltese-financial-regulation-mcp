@@ -4,7 +4,7 @@
 
 [![npm version](https://badge.fury.io/js/%40ansvar%2Fmaltese-financial-regulation-mcp.svg)](https://www.npmjs.com/package/@ansvar/maltese-financial-regulation-mcp)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![CI](https://github.com/Ansvar-Systems/maltese-financial-regulation-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/Ansvar-Systems/maltese-financial-regulation-mcp/actions/workflows/ci.yml)
+[![CI](https://github.com/Ansvar-Systems/maltese-financial-regulation-mcp/actions/workflows/ghcr-build.yml/badge.svg)](https://github.com/Ansvar-Systems/maltese-financial-regulation-mcp/actions/workflows/ghcr-build.yml)
 
 Query Maltese financial regulation data -- regulations, decisions, and requirements from MFSA (Malta Financial Services Authority) -- directly from Claude, Cursor, or any MCP-compatible client.
 
