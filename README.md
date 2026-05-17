@@ -169,7 +169,15 @@ Apache License 2.0. See [LICENSE](./LICENSE) for details.
 
 ### Data Licenses
 
-Regulatory data sourced from official government publications. See `sources.yml` for per-source licensing details.
+**License code:** `MT-MFSA-Attribution` — Malta Financial Services Authority (MFSA) website terms, attribution-based reuse grant.
+
+**Verbatim grant** (MFSA disclaimer, recovered via [Wayback Machine 2026-05-17](https://web.archive.org/web/2025/https://www.mfsa.mt/disclaimer/) — live host at <https://www.mfsa.mt/disclaimer/> returns 403 to non-browser User-Agents):
+
+> Reproduction of information obtained from this site is allowed provided reproduction is complete, accurate, not malicious, and is accompanied by a proper reference to the source and an acknowledgement to the MFSA.
+
+Commercial reuse, derivatives, and redistribution are permitted with attribution. MFSA logos and hot-linking are separately restricted but do not affect content redistribution. See `sources.yml` for the anchored URL pattern and full provenance metadata.
+
+Attribution: "Source: Malta Financial Services Authority (MFSA), <https://www.mfsa.mt>. Reproduced under the MFSA website attribution terms."
 
 ---
 

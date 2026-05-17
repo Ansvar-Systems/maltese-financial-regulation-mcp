@@ -1,0 +1,39 @@
+# sources.yml -- Data provenance metadata
+# Reference: docs/mcp-infrastructure-blueprint.md
+# Last verified: 2026-05-17 (MT/CY fleet hygiene Round 2)
+
+schema_version: "1.0"
+mcp_name: "Maltese Financial Regulation MCP"
+category: "domain_intelligence"
+jurisdiction: "MT"
+
+sources:
+  - name: "Malta Financial Services Authority (MFSA)"
+    authority: "Malta Financial Services Authority"
+    official_url: "https://www.mfsa.mt"
+    retrieval_method: "HTML_SCRAPE"
+    format: "HTML"
+    authentication: "none"
+    update_frequency: "monthly"
+    license:
+      code: "MT-MFSA-Attribution"
+      type: "Publisher website terms — attribution-based reuse grant"
+      url: "https://www.mfsa.mt/disclaimer/"
+      evidence_url: "https://web.archive.org/web/2025/https://www.mfsa.mt/disclaimer/"
+      summary: >
+        MFSA disclaimer (Wayback-recovered 2026-05-17): "Reproduction of
+        information obtained from this site is allowed provided reproduction
+        is complete, accurate, not malicious, and is accompanied by a proper
+        reference to the source and an acknowledgement to the MFSA."
+        Commercial reuse permitted with attribution; derivatives permitted.
+        Live host returns 403 to non-browser User-Agents; verbatim terms
+        recovered via Internet Archive.
+      attribution_block: "Source: Malta Financial Services Authority (MFSA), https://www.mfsa.mt. Reproduced under the MFSA website attribution terms."
+    source_url_pattern: "^https?://(www\\.)?mfsa\\.mt/(news/administrative-measures-penalties|publications/(circulars|notices-and-decisions)|consumers/scams-warnings-and-reporting/warnings-and-notices)/.*"
+    source_url_pattern_granularity: "item-level"
+    coverage:
+      scope: >
+        MFSA Rules, Guidance Notes, Circulars, Notices and Decisions,
+        Administrative Measures and Penalties, public warnings.
+    languages:
+      - "en"
